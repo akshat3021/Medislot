@@ -1,0 +1,7 @@
+build/
+medislot
+medislot_tests
+medislot.exe
+*.o
+*.d
+.env

@@ -1,0 +1,1 @@
+-- Mod 1: 9 core tables (Patients, Waitlist, ProcedureResources, etc.)
