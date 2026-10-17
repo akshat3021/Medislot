@@ -50,8 +50,7 @@ static void race_on_real_database() {
 
     std::vector<int> patients;
     for (int i = 1; i <= 8; ++i)
-        patients.push_back(std::stoi(d.query("INSERT INTO patients (name) VALUES ($1) RETURNING id",
-                                             {"Demo racer " + std::to_string(i)})[0]["id"]));
+        patients.push_back(std::stoi(d.query("INSERT INTO patients (name) VALUES ($1) RETURNING id", {"Demo racer " + std::to_string(i)})[0]["id"]));
 
     std::atomic<int> booked{0}, rejected{0};
     std::vector<std::thread> threads;
