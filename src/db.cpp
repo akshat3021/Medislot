@@ -1,30 +1,62 @@
-#ifndef DB_HPP
-#define DB_HPP
+#include "db.hpp"
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
-#include <string>
-#include <memory>
-#include <pqxx/pqxx>
+Database& Database::getInstance() {
+    static Database instance;
+    return instance;
+}
 
-class Database {
-public:
-    // Thread-safe Singleton Instance
-    static Database& getInstance();
+bool Database::connect(const std::string& connection_string) {
+    try {
+        conn_ = std::make_shared<pqxx::connection>(connection_string);
+        if (conn_->is_open()) {
+            std::cout << "[DB] Connected to PostgreSQL database: " << conn_->dbname() << std::endl;
+            return true;
+        } else {
+            std::cerr << "[DB Error] Failed to open database connection." << std::endl;
+            return false;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[DB Error] Exception caught during connection: " << e.what() << std::endl;
+        return false;
+    }
+}
 
-    // Connection & Setup Methods
-    bool connect(const std::string& connection_string);
-    std::shared_ptr<pqxx::connection> getConnection();
+std::shared_ptr<pqxx::connection> Database::getConnection() {
+    return conn_;
+}
 
-    // SQL Execution Utilities
-    void executeScript(const std::string& filepath);
-    void initializeSchemaAndSeed();
+void Database::executeScript(const std::string& filepath) {
+    if (!conn_ || !conn_->is_open()) {
+        std::cerr << "[DB Error] Cannot execute script. Connection is not active." << std::endl;
+        return;
+    }
 
-private:
-    Database() = default;
-    ~Database() = default;
-    Database(const Database&) = delete;
-    Database& operator=(const Database&) = delete;
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "[DB Error] Unable to open SQL file: " << filepath << std::endl;
+        return;
+    }
 
-    std::shared_ptr<pqxx::connection> conn_;
-};
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string sql = buffer.str();
 
-#endif // DB_HPP
+    try {
+        pqxx::work W(*conn_);
+        W.exec(sql);
+        W.commit();
+        std::cout << "[DB] Successfully executed: " << filepath << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[DB Error] Execution failed for " << filepath << ": " << e.what() << std::endl;
+    }
+}
+
+void Database::initializeSchemaAndSeed() {
+    std::cout << "[DB] Initializing Database Infrastructure..." << std::endl;
+    executeScript("sql/schema.sql");
+    executeScript("sql/roles.sql");
+    executeScript("sql/seed.sql");
+}
