@@ -17,6 +17,7 @@ static void say(const std::string& line) {            // so lines from different
     std::cout << line << "\n";
 }
 
+
 // ---------------------------------------------------------------------------------------------
 // RACE CONDITION: 8 threads all try to take the same free slot.
 // ---------------------------------------------------------------------------------------------
@@ -103,6 +104,7 @@ static void lock_in_sorted_order(ResourceLocks& locks, std::vector<std::string> 
     say("   " + name + ": got both locks");
 }
 
+
 int run_deadlock_demo() {
     std::cout << "\n1) Opposite lock order (A: doctor then room, B: room then doctor):\n";
     {
@@ -123,3 +125,4 @@ int run_deadlock_demo() {
     std::cout << "\n";
     return 0;
 }
+
