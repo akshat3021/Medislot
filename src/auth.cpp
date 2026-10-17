@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-// Module 2: Access Control & Security - Authentication and Authorization
+
 
 bool authenticateUser(const std::string& username, const std::string& role) {
     // Validate if the assigned role matches system definitions
@@ -18,6 +18,6 @@ bool authorizeRole(const std::string& currentRole, const std::string& requiredRo
         return true;
     }
     
-    // Enforce role boundary checks
+
     return (currentRole == requiredRole);
 }
