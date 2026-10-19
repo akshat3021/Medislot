@@ -8,20 +8,25 @@ RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Build the C++ binary
-FROM gcc:13 AS backend-builder
+# Stage 2: Build the C++ binary using Debian Bookworm (matches runtime glibc / libstdc++)
+FROM debian:bookworm-slim AS backend-builder
 WORKDIR /app
-RUN apt-get update && apt-get install -y libpq-dev make
+RUN apt-get update && apt-get install -y \
+    g++ \
+    make \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 COPY . .
 RUN make clean && make
 
-# Stage 3: Minimal runtime image
+# Stage 3: Minimal runtime image (same Debian Bookworm base)
 FROM debian:bookworm-slim
 WORKDIR /app
 
-# Install runtime dependencies for libpq and certificates
+# Install runtime dependencies for libpq, libstdc++, and SSL certificates
 RUN apt-get update && apt-get install -y \
     libpq5 \
+    libstdc++6 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
