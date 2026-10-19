@@ -29,7 +29,6 @@ RUN apt-get update && apt-get install -y \
 COPY --from=backend-builder /app/medislot /app/medislot
 COPY --from=backend-builder /app/sql /app/sql
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-COPY web /app/web
 
 # Default port
 ENV PORT=8080
