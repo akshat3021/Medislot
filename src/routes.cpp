@@ -258,6 +258,6 @@ void run_server(Scheduler& scheduler, int port) {
                                   "action, COALESCE(detail, '') AS detail FROM audit_log ORDER BY id DESC LIMIT 50"));
     }));
 
-    std::cout << "Medislot is running at http://localhost:" << port << "   (Ctrl+C to stop)\n";
-    server.listen("127.0.0.1", port);
+    std::cout << "Medislot is running at http://0.0.0.0:" << port << "   (Ctrl+C to stop)\n";
+    server.listen("0.0.0.0", port);
 }
