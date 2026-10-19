@@ -91,7 +91,17 @@ void run_server(Scheduler& scheduler, int port) {
     // OS Concept: Thread Pool pattern handling concurrent HTTP connections
     server.new_task_queue = [] { return new httplib::ThreadPool(8); };
     server.set_payload_max_length(64 * 1024);
-    server.set_default_headers({{"X-Content-Type-Options", "nosniff"}, {"Cache-Control", "no-store"}});
+    server.set_default_headers({
+        {"X-Content-Type-Options", "nosniff"},
+        {"Cache-Control", "no-store"},
+        {"Access-Control-Allow-Origin", "*"},
+        {"Access-Control-Allow-Methods", "GET, POST, OPTIONS"},
+        {"Access-Control-Allow-Headers", "Content-Type, Authorization"}
+    });
+
+    server.Options(R"(/api/.*)", [](const httplib::Request&, httplib::Response& res) {
+        res.status = 204;
+    });
 
     // Serve frontend from frontend/dist if built, otherwise fallback to web/
     std::ifstream dist_index("frontend/dist/index.html");
