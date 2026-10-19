@@ -1,7 +1,24 @@
+# Build outputs
 build/
-medislot
-medislot_tests
-medislot.exe
 *.o
 *.d
+*.obj
+medislot
+medislot.exe
+medislot_tests
+medislot_tests.exe
+test_runner
+test_runner.exe
+
+# Environment configuration
 .env
+*.env
+
+# Dependencies & node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Archives & temporary
+*.zip
+reference/

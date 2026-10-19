@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "booking.hpp"
+#include "deadlock.hpp"
 
 using namespace std::chrono_literals;
 
@@ -106,11 +107,30 @@ static void lock_in_sorted_order(ResourceLocks& locks, std::vector<std::string> 
 int run_deadlock_demo() {
     std::cout << "\n1) Opposite lock order (A: doctor then room, B: room then doctor):\n";
     {
+        // OS Concept: Wait-For Graph (WFG) modeling circular wait
+        medislot::DeadlockManager& dm = medislot::DeadlockManager::instance();
+        dm.request_resource("booking A", "room:1", "booking B");
+        dm.request_resource("booking B", "doctor:1", "booking A");
+
+        medislot::DeadlockCycle cycle;
+        if (dm.check_deadlock(cycle)) {
+            std::cout << "   [Wait-For Graph] Cycle detected: ";
+            for (size_t i = 0; i < cycle.cycle_nodes.size(); ++i) {
+                std::cout << cycle.cycle_nodes[i] << (i + 1 < cycle.cycle_nodes.size() ? " -> " : "");
+            }
+            std::cout << "\n";
+        }
+
         std::timed_mutex doctor, room;
         std::thread a(lock_in_given_order, std::ref(doctor), std::ref(room), "booking A");
         std::thread b(lock_in_given_order, std::ref(room), std::ref(doctor), "booking B");
         a.join();
         b.join();
+
+        std::string victim;
+        if (dm.resolve_deadlock(victim)) {
+            std::cout << "   [Wait-For Graph] Resolved by terminating wait edge for: " << victim << "\n";
+        }
     }
     std::cout << "\n2) Same requests, but ResourceLocks always locks in sorted order:\n";
     {
