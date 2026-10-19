@@ -18,6 +18,7 @@ static void say(const std::string& line) {            // so lines from different
     std::cout << line << "\n";
 }
 
+
 // ---------------------------------------------------------------------------------------------
 // RACE CONDITION: 8 threads all try to take the same free slot.
 // ---------------------------------------------------------------------------------------------
@@ -50,8 +51,7 @@ static void race_on_real_database() {
 
     std::vector<int> patients;
     for (int i = 1; i <= 8; ++i)
-        patients.push_back(std::stoi(d.query("INSERT INTO patients (name) VALUES ($1) RETURNING id",
-                                             {"Demo racer " + std::to_string(i)})[0]["id"]));
+        patients.push_back(std::stoi(d.query("INSERT INTO patients (name) VALUES ($1) RETURNING id", {"Demo racer " + std::to_string(i)})[0]["id"]));
 
     std::atomic<int> booked{0}, rejected{0};
     std::vector<std::thread> threads;
@@ -104,6 +104,7 @@ static void lock_in_sorted_order(ResourceLocks& locks, std::vector<std::string> 
     say("   " + name + ": got both locks");
 }
 
+
 int run_deadlock_demo() {
     std::cout << "\n1) Opposite lock order (A: doctor then room, B: room then doctor):\n";
     {
@@ -143,3 +144,4 @@ int run_deadlock_demo() {
     std::cout << "\n";
     return 0;
 }
+
