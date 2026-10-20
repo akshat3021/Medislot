@@ -32,8 +32,12 @@ export default function AuthLogin({ onLoginSuccess, setMessage }) {
   return (
     <section id="login-view">
       <h2>Sign in to Medislot</h2>
-      <form id="login-form" onSubmit={handleSubmit}>
-        <label>
+      <p style={{ margin: '0 0 1.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        Authorized clinical and patient access portal.
+      </p>
+
+      <form id="login-form" onSubmit={handleSubmit} style={{ margin: 0, padding: 0, border: 'none', boxShadow: 'none' }}>
+        <label htmlFor="username">
           Username
           <input
             id="username"
@@ -44,7 +48,7 @@ export default function AuthLogin({ onLoginSuccess, setMessage }) {
             placeholder="e.g. admin, reception, drmehta, alice"
           />
         </label>
-        <label>
+        <label htmlFor="password">
           Password
           <input
             id="password"
@@ -56,29 +60,51 @@ export default function AuthLogin({ onLoginSuccess, setMessage }) {
             placeholder="Enter password"
           />
         </label>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
-        </button>
+        <div style={{ marginTop: '1.25rem' }}>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+        </div>
       </form>
 
-      <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-        <p style={{ margin: '0 0 .5rem', fontSize: '0.85rem', color: '#6b7280' }}>
-          <strong>Quick Role Demo Accounts:</strong>
+      <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)' }}>
+        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+          Quick Role Demo Accounts:
         </p>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => handleQuickLogin('admin', 'admin123')} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+        <div className="quick-roles-container">
+          <button
+            type="button"
+            className="quick-role-btn"
+            onClick={() => handleQuickLogin('admin', 'admin123')}
+          >
             Admin (Full Access)
           </button>
-          <button type="button" onClick={() => handleQuickLogin('reception', 'reception123')} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+          <button
+            type="button"
+            className="quick-role-btn"
+            onClick={() => handleQuickLogin('reception', 'reception123')}
+          >
             Reception (Staff)
           </button>
-          <button type="button" onClick={() => handleQuickLogin('drmehta', 'doctor123')} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+          <button
+            type="button"
+            className="quick-role-btn"
+            onClick={() => handleQuickLogin('drmehta', 'doctor123')}
+          >
             Doctor (Appointments/ICU)
           </button>
-          <button type="button" onClick={() => handleQuickLogin('alice', 'patient123')} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+          <button
+            type="button"
+            className="quick-role-btn"
+            onClick={() => handleQuickLogin('alice', 'patient123')}
+          >
             Patient (Alice)
           </button>
-          <button type="button" onClick={() => handleQuickLogin('bob', 'patient123')} style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>
+          <button
+            type="button"
+            className="quick-role-btn"
+            onClick={() => handleQuickLogin('bob', 'patient123')}
+          >
             Patient (Bob)
           </button>
         </div>

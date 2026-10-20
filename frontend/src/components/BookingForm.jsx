@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 
 const STAFF = ['admin', 'reception'];
@@ -14,27 +14,31 @@ export default function BookingForm({ user, setMessage }) {
   const [roomId, setRoomId] = useState('');
   const [startTime, setStartTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
 
   const isStaff = STAFF.includes(user.role);
+  const isMountedRef = useRef(true);
 
   // Load appointments
   const loadAppointments = async () => {
     try {
       const rows = await api('/appointments');
-      setAppointments(rows);
+      if (isMountedRef.current) setAppointments(rows);
     } catch (err) {
-      setMessage({ text: err.message, isError: true });
+      if (isMountedRef.current) setMessage({ text: err.message, isError: true });
     }
   };
 
   // Initial resource loading
   useEffect(() => {
+    isMountedRef.current = true;
     const fetchResources = async () => {
       try {
         const [docsData, roomsData] = await Promise.all([
           api('/doctors'),
           api('/rooms'),
         ]);
+        if (!isMountedRef.current) return;
         setDoctors(docsData);
         setRooms(roomsData);
         if (docsData.length > 0) {
@@ -43,18 +47,23 @@ export default function BookingForm({ user, setMessage }) {
 
         if (isStaff) {
           const patientsData = await api('/patients');
+          if (!isMountedRef.current) return;
           setPatients(patientsData);
           if (patientsData.length > 0) {
             setPatientId(patientsData[0].id);
           }
         }
       } catch (err) {
-        setMessage({ text: err.message, isError: true });
+        if (isMountedRef.current) setMessage({ text: err.message, isError: true });
       }
     };
 
     fetchResources();
     loadAppointments();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [user.role, isStaff]);
 
   const getPayload = () => {
@@ -110,12 +119,15 @@ export default function BookingForm({ user, setMessage }) {
   };
 
   const handleCancel = async (id) => {
+    setCancellingId(id);
     try {
       await api(`/appointments/${id}/cancel`, 'POST');
-      setMessage({ text: 'Appointment cancelled.', isError: false });
+      if (isMountedRef.current) setMessage({ text: 'Appointment cancelled.', isError: false });
       loadAppointments();
     } catch (err) {
-      setMessage({ text: err.message, isError: true });
+      if (isMountedRef.current) setMessage({ text: err.message, isError: true });
+    } finally {
+      if (isMountedRef.current) setCancellingId(null);
     }
   };
 
@@ -126,7 +138,7 @@ export default function BookingForm({ user, setMessage }) {
           <h2>Book an Appointment or Procedure</h2>
 
           {isStaff && (
-            <label className="staff-only">
+            <label className="staff-only" htmlFor="book-patient">
               Patient
               <select
                 id="book-patient"
@@ -142,7 +154,7 @@ export default function BookingForm({ user, setMessage }) {
             </label>
           )}
 
-          <label>
+          <label htmlFor="book-doctor">
             Doctor
             <select
               id="book-doctor"
@@ -158,7 +170,7 @@ export default function BookingForm({ user, setMessage }) {
             </select>
           </label>
 
-          <label>
+          <label htmlFor="book-room">
             Room (optional)
             <select
               id="book-room"
@@ -174,7 +186,7 @@ export default function BookingForm({ user, setMessage }) {
             </select>
           </label>
 
-          <label>
+          <label htmlFor="book-start">
             Date and time
             <input
               id="book-start"
@@ -186,16 +198,16 @@ export default function BookingForm({ user, setMessage }) {
             />
           </label>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+          <div className="form-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Processing...' : 'Book'}
+              {submitting ? 'Processing...' : 'Book Appointment'}
             </button>
             <button
               type="button"
               id="waitlist-button"
+              className="secondary"
               onClick={handleWaitlist}
               disabled={submitting}
-              style={{ background: '#4b5563' }}
             >
               Join waitlist for this slot
             </button>
@@ -204,59 +216,60 @@ export default function BookingForm({ user, setMessage }) {
       )}
 
       <h2>Scheduled Appointments</h2>
-      <table id="appointments-table">
-        <thead>
-          <tr>
-            <th>When</th>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Room</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {appointments.length === 0 ? (
+      <div className="table-wrapper">
+        <table id="appointments-table" aria-label="Scheduled Appointments">
+          <thead>
             <tr>
-              <td colSpan="6" style={{ textAlign: 'center', color: '#6b7280' }}>
-                No appointments found.
-              </td>
+              <th scope="col">When</th>
+              <th scope="col">Patient</th>
+              <th scope="col">Doctor</th>
+              <th scope="col">Room</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
             </tr>
-          ) : (
-            appointments.map((row) => (
-              <tr key={row.id}>
-                <td>{row.start}</td>
-                <td>{row.patient}</td>
-                <td>{row.doctor}</td>
-                <td>{row.room || '-'}</td>
-                <td>
-                  <span
-                    style={{
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.8rem',
-                      background: row.status === 'booked' ? '#dcfce7' : '#fee2e2',
-                      color: row.status === 'booked' ? '#166534' : '#991b1b',
-                    }}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td>
-                  {row.status === 'booked' && (
-                    <button
-                      className="danger"
-                      onClick={() => handleCancel(row.id)}
-                    >
-                      Cancel
-                    </button>
-                  )}
+          </thead>
+          <tbody>
+            {appointments.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1rem' }}>
+                  No appointments found.
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              appointments.map((row) => (
+                <tr key={row.id}>
+                  <td style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{row.start}</td>
+                  <td>{row.patient}</td>
+                  <td>{row.doctor}</td>
+                  <td>{row.room || '-'}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        row.status === 'booked' ? 'badge-success' : 'badge-danger'
+                      }`}
+                    >
+                      {row.status}
+                    </span>
+                  </td>
+                  <td>
+                    {row.status === 'booked' && (
+                      <button
+                        type="button"
+                        className="danger"
+                        disabled={cancellingId === row.id}
+                        onClick={() => handleCancel(row.id)}
+                        style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
+                      >
+                        {cancellingId === row.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

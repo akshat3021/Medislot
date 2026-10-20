@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './style.css';
 import { api } from './api';
 import AuthLogin from './components/AuthLogin';
@@ -35,7 +35,7 @@ export default function App() {
     try {
       await api('/logout', 'POST');
     } catch (e) {
-      // ignore
+      // ignore network errors on signout
     }
     setToken(null);
     setUser(null);
@@ -51,29 +51,51 @@ export default function App() {
   return (
     <div>
       <header>
-        <h1>Medislot Hospital System</h1>
+        <div className="header-brand">
+          <span className="brand-icon" aria-hidden="true">+</span>
+          <h1>Medislot Hospital System</h1>
+        </div>
         {user && (
-          <span id="who">
-            {user.username} ({user.role})
-          </span>
-        )}
-        {user && (
-          <button id="logout" onClick={handleSignOut}>
-            Sign out
-          </button>
+          <div className="header-user-nav">
+            <span id="who">
+              {user.username} ({user.role})
+            </span>
+            <button id="logout" type="button" onClick={handleSignOut}>
+              Sign out
+            </button>
+          </div>
         )}
       </header>
 
       <main>
-        {message.text && (
-          <p
-            id="message"
-            role="status"
-            className={message.isError ? 'error' : 'ok'}
-          >
-            {message.text}
-          </p>
-        )}
+        <div className={`message-wrapper ${message.text ? '' : 'empty'}`}>
+          {message.text && (
+            <p
+              id="message"
+              role="status"
+              aria-live="polite"
+              className={message.isError ? 'error' : 'ok'}
+            >
+              <span>{message.text}</span>
+              <button
+                type="button"
+                onClick={() => setMessage({ text: '', isError: false })}
+                aria-label="Dismiss notification"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'inherit',
+                  padding: '0 0.25rem',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                }}
+              >
+                &times;
+              </button>
+            </p>
+          )}
+        </div>
 
         {!token || !user ? (
           <AuthLogin
@@ -82,13 +104,14 @@ export default function App() {
           />
         ) : (
           <div id="app-view">
-            <nav id="tabs">
+            <nav id="tabs" aria-label="Hospital modules">
               {canAccessTab('appointments') && (
                 <button
                   type="button"
                   data-tab="appointments"
                   className={activeTab === 'appointments' ? 'active' : ''}
                   onClick={() => setActiveTab('appointments')}
+                  aria-selected={activeTab === 'appointments'}
                 >
                   Appointments
                 </button>
@@ -99,6 +122,7 @@ export default function App() {
                   data-tab="icu"
                   className={activeTab === 'icu' ? 'active' : ''}
                   onClick={() => setActiveTab('icu')}
+                  aria-selected={activeTab === 'icu'}
                 >
                   ICU beds & Waitlist
                 </button>
@@ -109,6 +133,7 @@ export default function App() {
                   data-tab="dashboard"
                   className={activeTab === 'dashboard' ? 'active' : ''}
                   onClick={() => setActiveTab('dashboard')}
+                  aria-selected={activeTab === 'dashboard'}
                 >
                   Dashboard
                 </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 
 export default function Dashboard({ user, setMessage }) {
@@ -7,117 +7,138 @@ export default function Dashboard({ user, setMessage }) {
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const isMountedRef = useRef(true);
+
   const loadDashboard = async () => {
     setLoading(true);
     try {
       const stats = await api('/stats');
+      if (!isMountedRef.current) return;
       setTotals(stats.totals || { booked: 0, cancelled: 0 });
       setPerDoctor(stats.per_doctor || []);
 
       if (user.role === 'admin') {
         const audit = await api('/audit');
+        if (!isMountedRef.current) return;
         setAuditLogs(audit || []);
       }
     } catch (err) {
-      setMessage({ text: err.message, isError: true });
+      if (isMountedRef.current) setMessage({ text: err.message, isError: true });
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadDashboard();
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [user.role]);
 
   return (
     <section className="tab" id="tab-dashboard">
       <h2>Analytics & Resource Utilization Overview</h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-          <div style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 600 }}>Total Booked</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#15803d' }}>{totals.booked}</div>
+      {/* Metrics Cards Grid */}
+      <div className="dashboard-grid">
+        <div className="stat-card" style={{ borderLeft: '4px solid var(--success)' }}>
+          <div className="stat-title">Total Booked Appointments</div>
+          <div className="stat-value" style={{ color: 'var(--success-text)' }}>
+            {totals.booked}
+          </div>
         </div>
-        <div style={{ background: '#fef2f2', padding: '1rem', borderRadius: '8px', border: '1px solid #fecaca' }}>
-          <div style={{ fontSize: '0.85rem', color: '#991b1b', fontWeight: 600 }}>Total Cancelled</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#b91c1c' }}>{totals.cancelled}</div>
+
+        <div className="stat-card" style={{ borderLeft: '4px solid var(--danger)' }}>
+          <div className="stat-title">Total Cancelled Appointments</div>
+          <div className="stat-value" style={{ color: 'var(--danger-text)' }}>
+            {totals.cancelled}
+          </div>
         </div>
-        <div style={{ background: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-          <div style={{ fontSize: '0.85rem', color: '#1e40af', fontWeight: 600 }}>Active Doctors Monitored</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#2563eb' }}>{perDoctor.length}</div>
+
+        <div className="stat-card" style={{ borderLeft: '4px solid var(--primary)' }}>
+          <div className="stat-title">Active Doctors Monitored</div>
+          <div className="stat-value" style={{ color: 'var(--primary)' }}>
+            {perDoctor.length}
+          </div>
         </div>
       </div>
 
       <h2>Appointments per Doctor</h2>
-      <table id="stats-table">
-        <thead>
-          <tr>
-            <th>Doctor</th>
-            <th>Booked Appointments</th>
-          </tr>
-        </thead>
-        <tbody>
-          {perDoctor.length === 0 ? (
+      <div className="table-wrapper">
+        <table id="stats-table" aria-label="Appointments per Doctor">
+          <thead>
             <tr>
-              <td colSpan="2" style={{ textAlign: 'center', color: '#6b7280' }}>
-                No doctor appointment data recorded.
-              </td>
+              <th scope="col">Doctor</th>
+              <th scope="col">Booked Appointments</th>
             </tr>
-          ) : (
-            perDoctor.map((d, idx) => (
-              <tr key={idx}>
-                <td><strong>{d.doctor}</strong></td>
-                <td>{d.booked}</td>
+          </thead>
+          <tbody>
+            {perDoctor.length === 0 ? (
+              <tr>
+                <td colSpan="2" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1rem' }}>
+                  {loading ? 'Loading doctor metrics...' : 'No doctor appointment data recorded.'}
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              perDoctor.map((d, idx) => (
+                <tr key={idx}>
+                  <td style={{ fontWeight: 600 }}>{d.doctor}</td>
+                  <td style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{d.booked}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {user.role === 'admin' && (
         <div id="audit-box" style={{ marginTop: '2rem' }}>
-          <h2>Audit Log & Thread Tracking (Last 50 Events)</h2>
-          <table id="audit-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>User</th>
-                <th>Action</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {auditLogs.length === 0 ? (
+          <h2>Audit Log & Concurrency Thread Tracking (Last 50 Events)</h2>
+          <div className="table-wrapper">
+            <table id="audit-table" aria-label="Audit Log and Thread Events">
+              <thead>
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: '#6b7280' }}>
-                    No audit records available.
-                  </td>
+                  <th scope="col">Timestamp</th>
+                  <th scope="col">User</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Details</th>
                 </tr>
-              ) : (
-                auditLogs.map((log, idx) => (
-                  <tr key={idx}>
-                    <td style={{ fontSize: '0.85rem', color: '#4b5563' }}>{log.at}</td>
-                    <td><span style={{ fontWeight: 600 }}>{log.username}</span></td>
-                    <td>
-                      <span
-                        style={{
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          background: '#e0e7ff',
-                          color: '#3730a3',
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        {log.action}
-                      </span>
+              </thead>
+              <tbody>
+                {auditLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1rem' }}>
+                      {loading ? 'Loading audit records...' : 'No audit records available.'}
                     </td>
-                    <td>{log.detail}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  auditLogs.map((log, idx) => (
+                    <tr key={idx}>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                        {log.at}
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{log.username}</span>
+                      </td>
+                      <td>
+                        <span
+                          className="badge badge-info"
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}
+                        >
+                          {log.action}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.85rem', wordBreak: 'break-word' }}>
+                        {log.detail}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>
