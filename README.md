@@ -81,4 +81,4 @@ docs/TEAM_GUIDE.md   who does what + viva questions
 * Run **one** server process: the mutexes only coordinate threads of the same process (the database unique indexes
   are the safety net behind them).
 * The web page was written but its automated browser test was not completed; click through it once before the demo.
-* Windows build is untested.
+* Windows build is untested
