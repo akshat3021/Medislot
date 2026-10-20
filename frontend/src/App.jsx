@@ -55,10 +55,11 @@ export default function App() {
           <span className="brand-icon" aria-hidden="true">+</span>
           <h1>Medislot Hospital System</h1>
         </div>
+
         {user && (
           <div className="header-user-nav">
-            <span id="who">
-              {user.username} ({user.role})
+            <span id="who" title={`Logged in as ${user.username} (${user.role})`}>
+              {user.username} &middot; {user.role}
             </span>
             <button id="logout" type="button" onClick={handleSignOut}>
               Sign out
@@ -68,7 +69,8 @@ export default function App() {
       </header>
 
       <main>
-        <div className={`message-wrapper ${message.text ? '' : 'empty'}`}>
+        {/* Notification banner — no layout shift */}
+        <div className={`message-wrapper${message.text ? '' : ' empty'}`}>
           {message.text && (
             <p
               id="message"
@@ -79,17 +81,9 @@ export default function App() {
               <span>{message.text}</span>
               <button
                 type="button"
+                className="message-dismiss"
                 onClick={() => setMessage({ text: '', isError: false })}
                 aria-label="Dismiss notification"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'inherit',
-                  padding: '0 0.25rem',
-                  fontSize: '1.1rem',
-                  cursor: 'pointer',
-                  lineHeight: 1,
-                }}
               >
                 &times;
               </button>
@@ -104,7 +98,7 @@ export default function App() {
           />
         ) : (
           <div id="app-view">
-            <nav id="tabs" aria-label="Hospital modules">
+            <nav id="tabs" role="navigation" aria-label="Hospital modules">
               {canAccessTab('appointments') && (
                 <button
                   type="button"
@@ -124,7 +118,7 @@ export default function App() {
                   onClick={() => setActiveTab('icu')}
                   aria-selected={activeTab === 'icu'}
                 >
-                  ICU beds & Waitlist
+                  ICU beds &amp; Waitlist
                 </button>
               )}
               {canAccessTab('dashboard') && (

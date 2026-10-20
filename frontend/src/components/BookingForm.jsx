@@ -19,7 +19,6 @@ export default function BookingForm({ user, setMessage }) {
   const isStaff = STAFF.includes(user.role);
   const isMountedRef = useRef(true);
 
-  // Load appointments
   const loadAppointments = async () => {
     try {
       const rows = await api('/appointments');
@@ -29,7 +28,6 @@ export default function BookingForm({ user, setMessage }) {
     }
   };
 
-  // Initial resource loading
   useEffect(() => {
     isMountedRef.current = true;
     const fetchResources = async () => {
@@ -41,29 +39,21 @@ export default function BookingForm({ user, setMessage }) {
         if (!isMountedRef.current) return;
         setDoctors(docsData);
         setRooms(roomsData);
-        if (docsData.length > 0) {
-          setDoctorId(docsData[0].id);
-        }
+        if (docsData.length > 0) setDoctorId(docsData[0].id);
 
         if (isStaff) {
           const patientsData = await api('/patients');
           if (!isMountedRef.current) return;
           setPatients(patientsData);
-          if (patientsData.length > 0) {
-            setPatientId(patientsData[0].id);
-          }
+          if (patientsData.length > 0) setPatientId(patientsData[0].id);
         }
       } catch (err) {
         if (isMountedRef.current) setMessage({ text: err.message, isError: true });
       }
     };
-
     fetchResources();
     loadAppointments();
-
-    return () => {
-      isMountedRef.current = false;
-    };
+    return () => { isMountedRef.current = false; };
   }, [user.role, isStaff]);
 
   const getPayload = () => {
@@ -72,9 +62,7 @@ export default function BookingForm({ user, setMessage }) {
       room_id: roomId ? Number(roomId) : 0,
       start: startTime.replace('T', ' '),
     };
-    if (isStaff && patientId) {
-      payload.patient_id = Number(patientId);
-    }
+    if (isStaff && patientId) payload.patient_id = Number(patientId);
     return payload;
   };
 
@@ -84,7 +72,6 @@ export default function BookingForm({ user, setMessage }) {
       setMessage({ text: 'Please select a doctor and appointment date/time.', isError: true });
       return;
     }
-
     setSubmitting(true);
     try {
       await api('/appointments', 'POST', getPayload());
@@ -102,7 +89,6 @@ export default function BookingForm({ user, setMessage }) {
       setMessage({ text: 'Please select a doctor and appointment date/time before joining waitlist.', isError: true });
       return;
     }
-
     setSubmitting(true);
     try {
       await api('/waitlist', 'POST', getPayload());
@@ -133,74 +119,78 @@ export default function BookingForm({ user, setMessage }) {
 
   return (
     <section className="tab" id="tab-appointments">
+      {/* ── Booking form (hidden for doctor role) ── */}
       {user.role !== 'doctor' && (
         <form id="book-form" className="can-book" onSubmit={handleBook}>
-          <h2>Book an Appointment or Procedure</h2>
+          <h2>Book an Appointment</h2>
 
-          {isStaff && (
-            <label className="staff-only" htmlFor="book-patient">
-              Patient
+          <div className="booking-form-grid">
+            {/* Staff: patient selector spans full width above the two columns */}
+            {isStaff && (
+              <div className="booking-patient-row">
+                <label htmlFor="book-patient" className="staff-only">
+                  <span className="label-text">Patient</span>
+                  <select
+                    id="book-patient"
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                  >
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {/* Left column: Doctor */}
+            <label htmlFor="book-doctor">
+              <span className="label-text">Doctor</span>
               <select
-                id="book-patient"
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
+                id="book-doctor"
+                required
+                value={doctorId}
+                onChange={(e) => setDoctorId(e.target.value)}
               >
-                {patients.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
+                {doctors.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
                 ))}
               </select>
             </label>
-          )}
 
-          <label htmlFor="book-doctor">
-            Doctor
-            <select
-              id="book-doctor"
-              required
-              value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
-            >
-              {doctors.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} - {d.specialty}
-                </option>
-              ))}
-            </select>
-          </label>
+            {/* Right column: Date & time */}
+            <label htmlFor="book-start">
+              <span className="label-text">Date &amp; Time</span>
+              <input
+                id="book-start"
+                type="datetime-local"
+                step="1800"
+                required
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </label>
 
-          <label htmlFor="book-room">
-            Room (optional)
-            <select
-              id="book-room"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-            >
-              <option value="">(none)</option>
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            {/* Left column: Room */}
+            <label htmlFor="book-room">
+              <span className="label-text">Room</span>
+              <span className="label-hint">Optional</span>
+              <select
+                id="book-room"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+              >
+                <option value="">(none)</option>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-          <label htmlFor="book-start">
-            Date and time
-            <input
-              id="book-start"
-              type="datetime-local"
-              step="1800"
-              required
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-          </label>
-
-          <div className="form-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
+          <div className="form-actions">
             <button type="submit" disabled={submitting}>
-              {submitting ? 'Processing...' : 'Book Appointment'}
+              {submitting ? 'Processing…' : 'Book Appointment'}
             </button>
             <button
               type="button"
@@ -209,13 +199,16 @@ export default function BookingForm({ user, setMessage }) {
               onClick={handleWaitlist}
               disabled={submitting}
             >
-              Join waitlist for this slot
+              Join Waitlist for This Slot
             </button>
           </div>
         </form>
       )}
 
-      <h2>Scheduled Appointments</h2>
+      {/* ── Appointments table ── */}
+      <h2 style={{ marginTop: user.role !== 'doctor' ? 'var(--space-6)' : 0 }}>
+        Scheduled Appointments
+      </h2>
       <div className="table-wrapper">
         <table id="appointments-table" aria-label="Scheduled Appointments">
           <thead>
@@ -231,23 +224,19 @@ export default function BookingForm({ user, setMessage }) {
           <tbody>
             {appointments.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1rem' }}>
-                  No appointments found.
-                </td>
+                <td colSpan="6" className="td-empty">No appointments found.</td>
               </tr>
             ) : (
               appointments.map((row) => (
                 <tr key={row.id}>
-                  <td style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{row.start}</td>
+                  <td className="tabular" style={{ fontWeight: 500 }}>{row.start}</td>
                   <td>{row.patient}</td>
                   <td>{row.doctor}</td>
-                  <td>{row.room || '-'}</td>
+                  <td style={{ color: row.room ? 'inherit' : 'var(--text-muted)' }}>
+                    {row.room || '—'}
+                  </td>
                   <td>
-                    <span
-                      className={`badge ${
-                        row.status === 'booked' ? 'badge-success' : 'badge-danger'
-                      }`}
-                    >
+                    <span className={`badge ${row.status === 'booked' ? 'badge-success' : 'badge-danger'}`}>
                       {row.status}
                     </span>
                   </td>
@@ -255,12 +244,11 @@ export default function BookingForm({ user, setMessage }) {
                     {row.status === 'booked' && (
                       <button
                         type="button"
-                        className="danger"
+                        className="danger btn-sm"
                         disabled={cancellingId === row.id}
                         onClick={() => handleCancel(row.id)}
-                        style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
                       >
-                        {cancellingId === row.id ? 'Cancelling...' : 'Cancel'}
+                        {cancellingId === row.id ? 'Cancelling…' : 'Cancel'}
                       </button>
                     )}
                   </td>

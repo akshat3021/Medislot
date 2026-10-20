@@ -30,85 +30,104 @@ export default function AuthLogin({ onLoginSuccess, setMessage }) {
   };
 
   return (
-    <section id="login-view">
-      <h2>Sign in to Medislot</h2>
-      <p style={{ margin: '0 0 1.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-        Authorized clinical and patient access portal.
-      </p>
-
-      <form id="login-form" onSubmit={handleSubmit} style={{ margin: 0, padding: 0, border: 'none', boxShadow: 'none' }}>
-        <label htmlFor="username">
-          Username
-          <input
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoComplete="username"
-            placeholder="e.g. admin, reception, drmehta, alice"
-          />
-        </label>
-        <label htmlFor="password">
-          Password
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            placeholder="Enter password"
-          />
-        </label>
-        <div style={{ marginTop: '1.25rem' }}>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
+    <div className="login-page">
+      <div className="login-card">
+        {/* Card header */}
+        <div className="login-card-header">
+          <div className="login-brand">
+            <span className="login-brand-icon" aria-hidden="true">+</span>
+            <span className="login-brand-name">Medislot</span>
+          </div>
+          <h2 className="login-title" style={{ margin: 0, fontSize: '1.15rem' }}>
+            Sign in to your account
+          </h2>
+          <p className="login-subtitle" style={{ marginTop: '0.25rem' }}>
+            Authorized clinical and patient access only
+          </p>
         </div>
-      </form>
 
-      <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)' }}>
-        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-          Quick Role Demo Accounts:
-        </p>
-        <div className="quick-roles-container">
-          <button
-            type="button"
-            className="quick-role-btn"
-            onClick={() => handleQuickLogin('admin', 'admin123')}
-          >
-            Admin (Full Access)
-          </button>
-          <button
-            type="button"
-            className="quick-role-btn"
-            onClick={() => handleQuickLogin('reception', 'reception123')}
-          >
-            Reception (Staff)
-          </button>
-          <button
-            type="button"
-            className="quick-role-btn"
-            onClick={() => handleQuickLogin('drmehta', 'doctor123')}
-          >
-            Doctor (Appointments/ICU)
-          </button>
-          <button
-            type="button"
-            className="quick-role-btn"
-            onClick={() => handleQuickLogin('alice', 'patient123')}
-          >
-            Patient (Alice)
-          </button>
-          <button
-            type="button"
-            className="quick-role-btn"
-            onClick={() => handleQuickLogin('bob', 'patient123')}
-          >
-            Patient (Bob)
-          </button>
+        {/* Login form */}
+        <div className="login-card-body">
+          <form id="login-form" onSubmit={handleSubmit} noValidate>
+            <label htmlFor="username">
+              <span className="label-text">Username</span>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+                autoFocus
+                placeholder="e.g. admin, drmehta, alice"
+              />
+            </label>
+
+            <label htmlFor="password">
+              <span className="label-text">Password</span>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="Enter password"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="login-submit-btn"
+              disabled={loading}
+            >
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+        </div>
+
+        {/* Quick demo accounts */}
+        <div className="login-demo">
+          <div className="login-demo-label">Quick demo accounts</div>
+          <div className="quick-roles-container">
+            <button
+              type="button"
+              className="quick-role-btn"
+              onClick={() => handleQuickLogin('admin', 'admin123')}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              className="quick-role-btn"
+              onClick={() => handleQuickLogin('reception', 'reception123')}
+            >
+              Reception
+            </button>
+            <button
+              type="button"
+              className="quick-role-btn"
+              onClick={() => handleQuickLogin('drmehta', 'doctor123')}
+            >
+              Dr. Mehta
+            </button>
+            <button
+              type="button"
+              className="quick-role-btn"
+              onClick={() => handleQuickLogin('alice', 'patient123')}
+            >
+              Alice
+            </button>
+            <button
+              type="button"
+              className="quick-role-btn"
+              onClick={() => handleQuickLogin('bob', 'patient123')}
+            >
+              Bob
+            </button>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
